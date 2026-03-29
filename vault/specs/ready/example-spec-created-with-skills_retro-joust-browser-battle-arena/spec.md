@@ -33,6 +33,7 @@ Build a browser-native Joust game using WebGL-accelerated 2D rendering (PixiJS) 
 - Audio — sound effects and background music (retro-inspired)
 - Responsive layout — playable on desktop browsers; keyboard and gamepad input
 - Deployable to Vercel — static build with API route for leaderboards and signaling
+- Self-contained in `examples/spec-created-joust-game/` — isolated example with its own package.json, build config, and tests; no files created at project root
 
 ### Out of Scope
 
@@ -85,6 +86,32 @@ Build a browser-native Joust game using WebGL-accelerated 2D rendering (PixiJS) 
 
 ## What
 
+### Project Structure
+
+All game source code, configuration, and tests MUST be created under `examples/spec-created-joust-game/` relative to the project root. This directory is a self-contained application with its own `package.json`, build tooling (Vite), and test configuration. Nothing should be created at the project root level — the game is an isolated example within a larger repository.
+
+```
+examples/spec-created-joust-game/
+├── package.json
+├── vite.config.ts
+├── playwright.config.ts
+├── tsconfig.json
+├── index.html
+├── src/
+│   ├── engine/        # physics, combat, entities, waves, egg lifecycle
+│   ├── renderer/      # PixiJS stage, sprites, particles, effects
+│   ├── input/         # keyboard, gamepad handlers
+│   ├── networking/    # WebRTC peer connection, signaling client
+│   ├── ui/            # menus, HUD, lobby, leaderboard display
+│   ├── modes/         # Classic, Survival, Versus game mode logic
+│   └── main.ts        # entry point
+├── api/               # Vercel serverless functions (leaderboard, signaling)
+├── public/            # static assets (sprites, audio)
+└── tests/
+    ├── e2e/           # Playwright tests
+    └── unit/          # Vitest tests
+```
+
 ### System Boundaries
 
 - **Game engine module** — physics (gravity, flap impulse, collision), combat resolution, entity management, wave spawner, egg lifecycle
@@ -102,14 +129,14 @@ Every AC has an automated feedback loop. Manual feedback is exceptional and just
 
 | AC | Fidelity | Layer(s) | Trigger | Observable Seam | Terminal Condition | Test Infra |
 |----|----------|----------|---------|-----------------|-------------------|------------|
-| AC-1 | live | e2e | Playwright launches dev server, presses flap key repeatedly | `window.game.getPlayerPosition()` Y-coordinate and FPS counter | Character Y rises >50px within 300ms of flap, falls back under gravity, rests on platform collision box. FPS >= 60 | new — Playwright + Vite dev server + `window.game` position API |
+| AC-1 | live | e2e | Playwright launches Vite dev server from `examples/spec-created-joust-game/`, presses flap key repeatedly | `window.game.getPlayerPosition()` Y-coordinate and FPS counter | Character Y rises >50px within 300ms of flap, falls back under gravity, rests on platform collision box. FPS >= 60 | new — Playwright + Vite dev server (rooted in `examples/spec-created-joust-game/`) + `window.game` position API |
 | AC-2 | live | e2e | Playwright spawns two characters at controlled positions via test-mode, moves higher into lower | `window.game.getLastCombatResult()` and particle system active count | Returns `{winner, loser, eggSpawned: true}`. Particle system `.activeCount > 0` at collision frame | new — Playwright + `window.game` test-mode API for deterministic positioning |
 | AC-3 | integration | backend, e2e | Vitest: game logic module with controllable clock. Playwright: visual confirmation of egg hatch/collect | Game state query: egg entity status (collected / hatched / active) | Path A: after timeout, enemy count increases by 1 with higher tier. Path B: collecting before timeout increases score and removes egg entity | new — Vitest (egg timer + hatch logic with mock clock) + Playwright (visual confirmation) |
 | AC-4 | live | e2e | Playwright plays through wave 1 using test-mode instant-kill, observes wave 2 spawn | Wave counter DOM text; `window.game.getWaveEnemies()` | Wave counter increments "Wave 1" -> "Wave 2". Wave 2 enemy count > wave 1 OR includes higher-tier types | new — Playwright + `window.game` wave inspection API |
 | AC-5 | live | e2e | Playwright sends simultaneous key events for P1 (arrows) and P2 (WASD) | `window.game.getPlayerPosition(1)` vs `window.game.getPlayerPosition(2)` | Positions diverge after independent inputs. Both characters interact with same enemy entities | new — Playwright multi-key input + game state API |
 | AC-6 | integration | e2e | Playwright opens two browser contexts; context A creates room, context B joins via invite URL | `RTCPeerConnection.connectionState` in both contexts; position sync between peers | Connection state === 'connected' in both contexts. Position update from peer A visible in peer B within 150ms | new — Playwright dual browser context + WebRTC state inspection + latency measurement |
 | AC-7 | live | e2e | Playwright triggers combat events in test mode, captures FPS during particle-heavy scenes | `window.game.getFPS()` and `performance.measure()` frame times | FPS >= 55 during 5-second combat sequence with >= 3 simultaneous particle emitters. No single frame exceeds 18ms | new — Playwright + exposed FPS/frame-time metrics on `window.game` |
-| AC-8 | integration | backend, e2e | Vitest: POST/GET `/api/leaderboard` with test data. Playwright: complete game and submit score | API response JSON; leaderboard DOM list in main menu | POST returns 201 with `{rank}`. GET returns sorted array. Playwright: submitted name appears in leaderboard list | new — Vitest (API route testing against dev server) + Playwright (end-to-end submission flow) |
+| AC-8 | integration | backend, e2e | Vitest: POST/GET `/api/leaderboard` with test data. Playwright: complete game and submit score. All tests run from `examples/spec-created-joust-game/` | API response JSON; leaderboard DOM list in main menu | POST returns 201 with `{rank}`. GET returns sorted array. Playwright: submitted name appears in leaderboard list | new — Vitest + Playwright (both configured in `examples/spec-created-joust-game/`) |
 
 <!-- Feedback Harness column definitions:
 - Fidelity: live = real service interaction (CLI against backend, browser automation + live backend, Docker, real APIs). integration = multiple real components, mocks only at true external boundaries. isolated = unit tests with mocks (justify why higher fidelity is infeasible). manual = human-only (justify).
