@@ -1,5 +1,5 @@
 ---
-slug: retro-joust-browser-battle-arena
+slug: example-spec-created-with-skills_retro-joust-browser-battle-arena
 created: 2026-03-28
 tags: [spec, golden-circle]
 ---
