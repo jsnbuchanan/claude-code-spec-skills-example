@@ -15,6 +15,11 @@ const gameAPI: GameTestAPI = {
   spawnEntity: () => '',
   killAllEnemies: () => {},
   triggerCombat: () => null,
+  resetFrameTimes: () => {},
+  isScreenShaking: () => false,
+  createRoom: () => '',
+  joinRoom: () => {},
+  getConnectionState: () => 'new',
 };
 
 window.game = gameAPI;
