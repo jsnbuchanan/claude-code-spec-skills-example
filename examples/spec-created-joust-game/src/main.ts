@@ -9,13 +9,14 @@ import {
 } from './engine/entities';
 import { updatePhysics, flap, entitiesOverlap } from './engine/physics';
 import { resolveCombat } from './engine/combat';
-import { tick as eggTick, createEgg } from './engine/egg';
+import { tick as eggTick, createEgg, collectEgg } from './engine/egg';
 import {
   spawnWave, getWaveState, getWaveEnemies, checkWaveComplete,
   advanceWave, resetWaves, getCurrentWave,
 } from './engine/waves';
 import { createHUD, updateHUD } from './ui/hud';
 import { createMenu, hideMenu, showMenu, type MenuAction } from './ui/menu';
+import { submitScore } from './leaderboard';
 import { createRoom as peerCreateRoom, joinRoom as peerJoinRoom, getConnectionState as peerGetConnectionState, sendPeerMessage, onPeerMessage, disconnect } from './networking/peer';
 import * as C from './engine/constants';
 
@@ -29,6 +30,8 @@ let testMode = false;
 let lastCombatResult: CombatResult | null = null;
 let gameRunning = false;
 let currentMode: GameMode = 'classic';
+let waveAdvanceTimer = 0;
+const WAVE_ADVANCE_DELAY = 500; // ms delay before next wave
 
 // FPS tracking
 function recordFrame(dt: number): void {
@@ -66,24 +69,40 @@ function gameLoop(timestamp: number): void {
   // Update egg timers
   eggTick(dt);
 
-  // Check for wave completion (classic mode)
-  if (currentMode === 'classic' && checkWaveComplete()) {
-    advanceWave();
+  // Check for wave completion (classic / survival modes)
+  if (currentMode !== 'versus' && checkWaveComplete()) {
+    waveAdvanceTimer += dt;
+    if (waveAdvanceTimer >= WAVE_ADVANCE_DELAY) {
+      advanceWave();
+      waveAdvanceTimer = 0;
+    }
+  } else {
+    waveAdvanceTimer = 0;
   }
 
-  // Check combat collisions
+  // Check combat collisions (player vs enemy)
   for (const player of players) {
     for (const enemy of getEnemies()) {
       if (entitiesOverlap(player, enemy)) {
+        const combatPos = { ...enemy.position };
         const result = resolveCombat(player.id, enemy.id);
         if (result) {
           lastCombatResult = result;
-          emitParticles(enemy.position, 20);
+          emitParticles(combatPos, 20);
           triggerScreenShake(6, 300);
-          if (result.winner === player.id) {
-            player.score += C.EGG_SCORE_VALUE;
-          }
         }
+      }
+    }
+  }
+
+  // Check egg collection (player overlaps egg → score)
+  const eggs = getEntitiesByType('egg');
+  for (const player of players) {
+    for (const egg of eggs) {
+      if (entitiesOverlap(player, egg)) {
+        const { scoreAwarded } = collectEgg(egg.id, player.playerIndex);
+        player.score += scoreAwarded;
+        finalScore = Math.max(finalScore, player.score);
       }
     }
   }
@@ -98,6 +117,13 @@ function gameLoop(timestamp: number): void {
     if (enemy.position.x <= 0 || enemy.position.x >= C.WORLD_WIDTH - enemy.width) {
       enemy.velocity.x = -enemy.velocity.x;
     }
+  }
+
+  // Check game over (all players dead)
+  const alivePlayers = getPlayers();
+  if (alivePlayers.length === 0 && !testMode) {
+    endGame();
+    return;
   }
 
   // Sync state over network
@@ -122,11 +148,24 @@ function gameLoop(timestamp: number): void {
   requestAnimationFrame(gameLoop);
 }
 
+let finalScore = 0;
+
+function endGame(): void {
+  gameRunning = false;
+  // Submit top score to leaderboard
+  if (finalScore > 0) {
+    const name = prompt('Game Over! Enter your name for the leaderboard:') ?? 'Anonymous';
+    submitScore(name, finalScore, currentMode);
+  }
+  showMenu();
+}
+
 function startGame(mode: GameMode, playerCount: number): void {
   clearEntities();
   clearParticles();
   resetWaves();
   lastCombatResult = null;
+  finalScore = 0;
   currentMode = mode;
   gameRunning = true;
   lastTime = 0;
@@ -277,18 +316,14 @@ function setupTestAPI(): void {
       }
     },
     triggerCombat(entityAId, entityBId) {
+      // Capture positions before combat resolves (may remove entities)
+      const entityB = getEntity(entityBId);
+      const combatPos = entityB ? { ...entityB.position } : { x: 400, y: 300 };
       const result = resolveCombat(entityAId, entityBId);
       if (result) {
         lastCombatResult = result;
-        const loser = getEntity(entityBId) ?? getEntity(entityAId);
-        if (loser) {
-          emitParticles(loser.position, 20);
-          triggerScreenShake(6, 300);
-        } else {
-          // Entity already removed by combat — use a fallback position
-          emitParticles({ x: 400, y: 300 }, 20);
-          triggerScreenShake(6, 300);
-        }
+        emitParticles(combatPos, 20);
+        triggerScreenShake(6, 300);
       }
       return result;
     },
