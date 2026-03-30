@@ -23,10 +23,21 @@ export function applyHorizontalDrag(entity: Entity): void {
 }
 
 export function screenWrap(entity: Entity): void {
+  // Horizontal wrap
   if (entity.position.x > C.WORLD_WIDTH) {
     entity.position.x = -entity.width;
   } else if (entity.position.x + entity.width < 0) {
     entity.position.x = C.WORLD_WIDTH;
+  }
+  // Vertical clamp — can't fly off top or fall past lava
+  if (entity.position.y < -entity.height) {
+    entity.position.y = -entity.height;
+    entity.velocity.y = Math.max(entity.velocity.y, 0);
+  }
+  if (entity.position.y > C.WORLD_HEIGHT - 30) {
+    // Hit lava — reset to a platform
+    entity.position.y = C.WORLD_HEIGHT - 30 - entity.height;
+    entity.velocity.y = -3; // bounce up a bit
   }
 }
 
