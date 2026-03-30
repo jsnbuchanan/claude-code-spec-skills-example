@@ -10,12 +10,12 @@ export const HORIZONTAL_SPEED = 3;
 export const HORIZONTAL_DRAG = 0.95;
 
 // Entity sizes
-export const PLAYER_WIDTH = 32;
-export const PLAYER_HEIGHT = 32;
-export const ENEMY_WIDTH = 32;
-export const ENEMY_HEIGHT = 32;
-export const EGG_WIDTH = 16;
-export const EGG_HEIGHT = 16;
+export const PLAYER_WIDTH = 40;
+export const PLAYER_HEIGHT = 40;
+export const ENEMY_WIDTH = 40;
+export const ENEMY_HEIGHT = 40;
+export const EGG_WIDTH = 18;
+export const EGG_HEIGHT = 22;
 
 // Egg lifecycle
 export const EGG_HATCH_TIMEOUT = 5000; // ms
@@ -45,10 +45,10 @@ export const PLATFORMS = [
   { x: 300, y: 100, width: 200 },    // top center
 ];
 
-// Player spawn positions
+// Player spawn positions (on the mid platforms)
 export const PLAYER_SPAWNS = [
-  { x: 200, y: 380 },
-  { x: 600, y: 380 },
+  { x: 150, y: 420 - 32 },  // on left mid platform
+  { x: 550, y: 420 - 32 },  // on right mid platform
 ];
 
 // Lives

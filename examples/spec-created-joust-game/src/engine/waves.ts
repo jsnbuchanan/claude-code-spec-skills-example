@@ -27,8 +27,11 @@ export function spawnWave(waveNumber: number): Enemy[] {
       tier = 'hunter';
     }
 
-    const x = Math.random() * (C.WORLD_WIDTH - C.ENEMY_WIDTH);
-    const y = 50 + Math.random() * 100;
+    // Spawn on random platform (not the ground)
+    const spawnPlatforms = C.PLATFORMS.slice(1); // skip ground
+    const plat = spawnPlatforms[Math.floor(Math.random() * spawnPlatforms.length)];
+    const x = plat.x + Math.random() * (plat.width - C.ENEMY_WIDTH);
+    const y = plat.y - C.ENEMY_HEIGHT;
     const enemy = createEnemy({ x, y }, tier);
     enemies.push(enemy);
   }

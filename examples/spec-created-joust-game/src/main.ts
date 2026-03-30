@@ -109,12 +109,22 @@ function gameLoop(timestamp: number): void {
 
   // AI enemy movement
   for (const enemy of getEnemies()) {
-    // Simple flap AI
-    if (Math.random() < 0.05) {
-      enemy.velocity.y = C.FLAP_IMPULSE * 0.7;
+    // Flap to stay airborne — only flap when falling and below a target height
+    const targetY = 100 + Math.random() * 300; // vary target altitude
+    if (enemy.velocity.y > 0 && enemy.position.y > targetY) {
+      // Only flap sometimes to create natural bobbing
+      if (Math.random() < 0.15) {
+        enemy.velocity.y = C.FLAP_IMPULSE * 0.5;
+      }
     }
-    // Reverse at edges
-    if (enemy.position.x <= 0 || enemy.position.x >= C.WORLD_WIDTH - enemy.width) {
+    // Reverse at screen edges
+    if (enemy.position.x <= 10) {
+      enemy.velocity.x = Math.abs(enemy.velocity.x);
+    } else if (enemy.position.x >= C.WORLD_WIDTH - enemy.width - 10) {
+      enemy.velocity.x = -Math.abs(enemy.velocity.x);
+    }
+    // Occasionally change direction
+    if (Math.random() < 0.005) {
       enemy.velocity.x = -enemy.velocity.x;
     }
   }
@@ -152,11 +162,11 @@ let finalScore = 0;
 
 function endGame(): void {
   gameRunning = false;
-  // Submit top score to leaderboard
+  // Auto-submit score with a default name (no blocking prompt)
   if (finalScore > 0) {
-    const name = prompt('Game Over! Enter your name for the leaderboard:') ?? 'Anonymous';
-    submitScore(name, finalScore, currentMode);
+    submitScore('Player', finalScore, currentMode);
   }
+  // Render continues to show last frame — menu overlay returns
   showMenu();
 }
 
