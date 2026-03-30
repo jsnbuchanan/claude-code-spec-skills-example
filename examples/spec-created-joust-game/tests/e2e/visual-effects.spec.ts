@@ -9,8 +9,8 @@ test.describe('AC-7: Visual Effects & Performance', () => {
     await page.waitForFunction(() => window.game !== undefined);
     await page.evaluate(() => window.game.setTestMode(true));
 
-    // Reset frame time tracking
-    await page.evaluate(() => window.game.getFrameTimes());
+    // Reset frame time tracking before the combat window
+    await page.evaluate(() => window.game.resetFrameTimes());
 
     // Spawn multiple combatants to trigger particle-heavy scenes
     await page.evaluate(() => {

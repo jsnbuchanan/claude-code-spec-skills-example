@@ -65,12 +65,17 @@ export interface GameTestAPI {
   getWaveState(): WaveState;
   getFPS(): number;
   getFrameTimes(): number[];
+  resetFrameTimes(): void;
   getParticleCount(): number;
   getScore(playerIndex?: number): number;
   setTestMode(enabled: boolean): void;
   spawnEntity(type: Entity['type'], position: Vector2, options?: Record<string, unknown>): string;
   killAllEnemies(): void;
   triggerCombat(entityA: string, entityB: string): CombatResult | null;
+  isScreenShaking(): boolean;
+  createRoom(): string;
+  joinRoom(code: string): void;
+  getConnectionState(): string;
 }
 
 declare global {
