@@ -1,5 +1,5 @@
-import type { GameTestAPI, Vector2, Entity, Enemy, CombatResult, GameMode } from './types';
-import { initRenderer, render } from './renderer/renderer';
+import type { GameTestAPI, Vector2, Entity, Player, Enemy, CombatResult, GameMode, PlayerAvatar } from './types';
+import { initRenderer, render, cleanupPlayerDisplays } from './renderer/renderer';
 import { emitParticles, getParticleCount, clearParticles } from './renderer/particles';
 import { triggerScreenShake, isScreenShaking } from './renderer/screen-effects';
 import { initKeyboard, getPlayerInput, clearJustPressed } from './input/keyboard';
@@ -16,6 +16,7 @@ import {
 } from './engine/waves';
 import { createHUD, updateHUD } from './ui/hud';
 import { createMenu, hideMenu, showMenu, type MenuAction } from './ui/menu';
+import { showPlayerSelect } from './ui/player-select';
 import { submitScore } from './leaderboard';
 import { createRoom as peerCreateRoom, joinRoom as peerJoinRoom, getConnectionState as peerGetConnectionState, sendPeerMessage, onPeerMessage, disconnect } from './networking/peer';
 import * as C from './engine/constants';
@@ -90,6 +91,16 @@ function gameLoop(timestamp: number): void {
           lastCombatResult = result;
           emitParticles(combatPos, 20);
           triggerScreenShake(6, 300);
+          // Trigger head animations
+          const winner = getEntity(result.winner);
+          if (winner && winner.type === 'player') {
+            (winner as Player).triumphTimer = 800;
+          }
+          const loser = getEntity(result.loser);
+          if (loser && loser.type === 'player') {
+            (loser as Player).isDying = true;
+            (loser as Player).deathTimer = 500;
+          }
         }
       }
     }
@@ -170,9 +181,10 @@ function endGame(): void {
   showMenu();
 }
 
-function startGame(mode: GameMode, playerCount: number): void {
+function startGame(mode: GameMode, playerCount: number, avatars?: PlayerAvatar[]): void {
   clearEntities();
   clearParticles();
+  cleanupPlayerDisplays();
   resetWaves();
   lastCombatResult = null;
   finalScore = 0;
@@ -180,9 +192,9 @@ function startGame(mode: GameMode, playerCount: number): void {
   gameRunning = true;
   lastTime = 0;
 
-  // Spawn players
+  // Spawn players with avatars if provided
   for (let i = 0; i < playerCount; i++) {
-    createPlayer(C.PLAYER_SPAWNS[i], i);
+    createPlayer(C.PLAYER_SPAWNS[i], i, avatars?.[i]);
   }
 
   // Spawn first wave (except versus mode)
@@ -194,10 +206,23 @@ function startGame(mode: GameMode, playerCount: number): void {
   requestAnimationFrame(gameLoop);
 }
 
+async function selectPlayersAndStart(mode: GameMode, playerCount: number): Promise<void> {
+  const container = document.getElementById('game-container')!;
+  hideMenu();
+
+  const avatars: PlayerAvatar[] = [];
+  for (let i = 0; i < playerCount; i++) {
+    const avatar = await showPlayerSelect(`Player ${i + 1}`, container);
+    avatars.push(avatar);
+  }
+
+  startGame(mode, playerCount, avatars);
+}
+
 // Handle menu actions
 function handleMenuAction(action: MenuAction): void {
   if (action.type === 'start') {
-    startGame(action.mode, action.players);
+    selectPlayersAndStart(action.mode, action.players);
   } else if (action.type === 'online') {
     // Online mode — check URL for room code
     const params = new URLSearchParams(window.location.search);

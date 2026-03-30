@@ -1,4 +1,4 @@
-import type { Entity, Player, Enemy, Egg, EnemyTier, Vector2 } from '../types';
+import type { Entity, Player, Enemy, Egg, EnemyTier, Vector2, PlayerAvatar } from '../types';
 import * as C from './constants';
 
 let nextId = 0;
@@ -42,7 +42,7 @@ export function getEggs(): Egg[] {
   return getEntitiesByType('egg') as Egg[];
 }
 
-export function createPlayer(position: Vector2, playerIndex: number): Player {
+export function createPlayer(position: Vector2, playerIndex: number, avatar?: PlayerAvatar): Player {
   const player: Player = {
     id: generateId(),
     type: 'player',
@@ -56,6 +56,12 @@ export function createPlayer(position: Vector2, playerIndex: number): Player {
     isFlapping: false,
     hasShield: false,
     lanceHeight: 0,
+    avatar,
+    headBobblePhase: 0,
+    headTiltAngle: 0,
+    triumphTimer: 0,
+    deathTimer: 0,
+    isDying: false,
   };
   addEntity(player);
   return player;
