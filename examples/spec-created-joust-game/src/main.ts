@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { GameTestAPI, Vector2, Entity, Player, Enemy, CombatResult, GameMode, PlayerAvatar } from './types';
 import { initRenderer, render, cleanupPlayerDisplays } from './renderer/renderer';
 import { emitParticles, getParticleCount, clearParticles } from './renderer/particles';

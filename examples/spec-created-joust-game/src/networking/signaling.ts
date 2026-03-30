@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 // Lightweight signaling for WebRTC using BroadcastChannel (same device)
 // For cross-network, falls back to manual SDP copy-paste
 

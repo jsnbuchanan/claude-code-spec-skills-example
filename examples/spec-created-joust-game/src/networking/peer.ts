@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Vector2 } from '../types';
 import { createSignalingChannel, sendSignal, onSignal, generateRoomCode, closeSignaling } from './signaling';
 

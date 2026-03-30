@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Entity, Player, CombatResult } from '../types';
 import { getEntity, removeEntity, createEggEntity } from './entities';
 import * as C from './constants';

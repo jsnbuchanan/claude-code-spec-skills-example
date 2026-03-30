@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Enemy, EnemyTier, WaveState } from '../types';
 import { createEnemy, getEnemies } from './entities';
 import * as C from './constants';

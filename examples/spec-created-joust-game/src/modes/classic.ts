@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import { spawnWave, checkWaveComplete, advanceWave, getWaveState, resetWaves } from '../engine/waves';
 import { tick as eggTick } from '../engine/egg';
 

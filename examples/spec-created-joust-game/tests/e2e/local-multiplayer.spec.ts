@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import { test, expect } from '@playwright/test';
 
 // AC-5: Local 2-player on same keyboard

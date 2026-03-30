@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({

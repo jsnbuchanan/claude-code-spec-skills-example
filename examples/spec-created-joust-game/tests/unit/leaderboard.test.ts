@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getLeaderboard, submitScore, clearLeaderboard } from '@/leaderboard';
 

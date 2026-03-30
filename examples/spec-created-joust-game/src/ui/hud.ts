@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Player, WaveState } from '../types';
 
 let hudContainer: HTMLDivElement | null = null;

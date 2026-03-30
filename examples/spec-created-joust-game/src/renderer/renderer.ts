@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import { Application, Graphics, Container, Sprite, Assets, Texture } from 'pixi.js';
 import type { Entity, Player, Enemy, Egg } from '../types';
 import { getEntitiesByType } from '../engine/entities';

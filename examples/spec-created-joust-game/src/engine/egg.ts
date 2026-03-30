@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Vector2, EnemyTier, Egg, Enemy } from '../types';
 import { createEggEntity, createEnemy, getNextTier, removeEntity, getEggs, getEnemies, clearEntities as clearAll } from './entities';
 import * as C from './constants';

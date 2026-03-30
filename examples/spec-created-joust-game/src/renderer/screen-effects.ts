@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 let shakeIntensity = 0;
 let shakeDuration = 0;
 let shakeTimer = 0;

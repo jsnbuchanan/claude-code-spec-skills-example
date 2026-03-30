@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 // Retro-style "READY PLAYER 1" + 3..2..1..FIGHT countdown with beeps
 
 const BEEP_FREQ = [440, 440, 440, 880]; // 3, 2, 1 = A4; FIGHT = A5

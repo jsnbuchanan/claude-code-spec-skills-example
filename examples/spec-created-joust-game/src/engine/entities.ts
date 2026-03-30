@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { Entity, Player, Enemy, Egg, EnemyTier, Vector2, PlayerAvatar } from '../types';
 import * as C from './constants';
 

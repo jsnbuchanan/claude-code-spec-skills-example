@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 // Game world dimensions
 export const WORLD_WIDTH = 800;
 export const WORLD_HEIGHT = 600;

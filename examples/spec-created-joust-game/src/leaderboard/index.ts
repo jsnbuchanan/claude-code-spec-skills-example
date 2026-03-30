@@ -1,3 +1,5 @@
+// Copyright 2026 LotZoom.com. Licensed under the Apache License, Version 2.0.
+
 import type { LeaderboardEntry, GameMode } from '../types';
 
 const STORAGE_KEY = 'joust-leaderboard';
