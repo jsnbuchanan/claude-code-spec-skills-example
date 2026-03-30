@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 describe('AC-3: Egg Lifecycle', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.resetModules();
   });
 
   afterEach(() => {
@@ -13,7 +14,8 @@ describe('AC-3: Egg Lifecycle', () => {
   });
 
   it('hatches into a stronger enemy when not collected within timeout', async () => {
-    const { createEgg, getEntities, tick } = await import('@/engine/egg');
+    const { createEgg, getEntities, tick, clearEntities } = await import('@/engine/egg');
+    clearEntities();
 
     // Spawn an egg from a defeated bounder
     createEgg({ x: 400, y: 300 }, 'bounder');
@@ -38,7 +40,8 @@ describe('AC-3: Egg Lifecycle', () => {
   });
 
   it('awards score when player collects egg before hatch timeout', async () => {
-    const { createEgg, collectEgg, getEntities } = await import('@/engine/egg');
+    const { createEgg, collectEgg, getEntities, clearEntities } = await import('@/engine/egg');
+    clearEntities();
 
     createEgg({ x: 400, y: 300 }, 'bounder');
     expect(getEntities('egg')).toHaveLength(1);
