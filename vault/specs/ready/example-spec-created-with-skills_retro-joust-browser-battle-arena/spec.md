@@ -29,10 +29,10 @@ Build a browser-native Joust game using WebGL-accelerated 2D rendering (PixiJS) 
 - Modern visual style — updated pixel art or stylized vector art, smooth 60fps animations, screen shake, hit effects
 - New mechanics — power-ups (speed boost, shield, double lance), 1-2 new enemy types beyond the original
 - Game modes — Classic (wave-based), Survival (endless), and Versus (PvP-only arena)
-- Leaderboards — persistent high scores per mode (stored server-side via Upstash Redis)
+- Leaderboards — high scores per mode stored in-memory (localStorage for persistence across sessions, shared via P2P during online play)
 - Audio — sound effects and background music (retro-inspired)
 - Responsive layout — playable on desktop browsers; keyboard and gamepad input
-- Deployable to Vercel — static build with API route for leaderboards and signaling
+- Deployable to Vercel — static build (no serverless functions needed)
 - Self-contained in `examples/spec-created-joust-game/` — isolated example with its own package.json, build config, and tests; no files created at project root
 
 ### Out of Scope
@@ -54,7 +54,7 @@ Build a browser-native Joust game using WebGL-accelerated 2D rendering (PixiJS) 
 - [ ] **AC-5:** **Given** two players are on the same keyboard, **When** they start a local multiplayer game, **Then** each player controls an independent character with separate key bindings, and both characters interact with the same game world (enemies, platforms, combat).
 - [ ] **AC-6:** **Given** a player creates an online game room, **When** a second player joins via the invite link, **Then** a WebRTC peer connection is established, both players see each other's characters in real-time with under 150ms perceived input delay, and gameplay state stays synchronized.
 - [ ] **AC-7:** **Given** the game is rendering, **When** visual effects trigger (combat sparks, feather particles, screen shake on defeat, dynamic lighting near lava), **Then** effects render via WebGL with no frame drops below 55fps on a mid-range device (e.g., integrated GPU laptop).
-- [ ] **AC-8:** **Given** a player completes a game in any mode, **When** their score qualifies for the leaderboard, **Then** their display name and score are persisted and appear on the leaderboard, sorted by score descending, and the leaderboard is visible from the main menu.
+- [ ] **AC-8:** **Given** a player completes a game in any mode, **When** their score qualifies for the leaderboard, **Then** their display name and score are persisted to localStorage and appear on the leaderboard sorted by score descending, the leaderboard is visible from the main menu, and scores persist across browser sessions.
 
 ### User Flows
 
@@ -105,7 +105,7 @@ examples/spec-created-joust-game/
 │   ├── ui/            # menus, HUD, lobby, leaderboard display
 │   ├── modes/         # Classic, Survival, Versus game mode logic
 │   └── main.ts        # entry point
-├── api/               # Vercel serverless functions (leaderboard, signaling)
+├── src/leaderboard/   # localStorage-based leaderboard module
 ├── public/            # static assets (sprites, audio)
 └── tests/
     ├── e2e/           # Playwright tests
@@ -118,8 +118,8 @@ examples/spec-created-joust-game/
 - **Renderer** — PixiJS stage, sprite management, particle systems, camera/screen shake, dynamic lighting
 - **Input system** — keyboard handler (multi-player key maps), gamepad API
 - **Networking module** — WebRTC peer connection, signaling (via Vercel serverless API route), state synchronization protocol
-- **Leaderboard API** — Vercel API route (serverless), Upstash Redis for persistence
-- **Signaling API** — Vercel API route for WebRTC SDP/ICE exchange, room creation/joining
+- **Leaderboard module** — in-memory + localStorage persistence, P2P score sharing during online play
+- **Signaling** — lightweight in-browser signaling via BroadcastChannel (same device) or manual SDP copy-paste for cross-network play
 - **Test mode API** — `window.game` debug interface exposing positions, entities, FPS, wave state for Playwright inspection
 - **UI shell** — main menu, lobby, HUD (score, wave, lives), leaderboard display
 
@@ -136,7 +136,7 @@ Every AC has an automated feedback loop. Manual feedback is exceptional and just
 | AC-5 | live | e2e | Playwright sends simultaneous key events for P1 (arrows) and P2 (WASD) | `window.game.getPlayerPosition(1)` vs `window.game.getPlayerPosition(2)` | Positions diverge after independent inputs. Both characters interact with same enemy entities | new — Playwright multi-key input + game state API |
 | AC-6 | integration | e2e | Playwright opens two browser contexts; context A creates room, context B joins via invite URL | `RTCPeerConnection.connectionState` in both contexts; position sync between peers | Connection state === 'connected' in both contexts. Position update from peer A visible in peer B within 150ms | new — Playwright dual browser context + WebRTC state inspection + latency measurement |
 | AC-7 | live | e2e | Playwright triggers combat events in test mode, captures FPS during particle-heavy scenes | `window.game.getFPS()` and `performance.measure()` frame times | FPS >= 55 during 5-second combat sequence with >= 3 simultaneous particle emitters. No single frame exceeds 18ms | new — Playwright + exposed FPS/frame-time metrics on `window.game` |
-| AC-8 | integration | backend, e2e | Vitest: POST/GET `/api/leaderboard` with test data. Playwright: complete game and submit score. All tests run from `examples/spec-created-joust-game/` | API response JSON; leaderboard DOM list in main menu | POST returns 201 with `{rank}`. GET returns sorted array. Playwright: submitted name appears in leaderboard list | new — Vitest + Playwright (both configured in `examples/spec-created-joust-game/`) |
+| AC-8 | integration | frontend, e2e | Vitest: leaderboard module stores/retrieves scores via localStorage. Playwright: complete game, submit score, verify it appears in leaderboard. All tests run from `examples/spec-created-joust-game/` | localStorage entries; leaderboard DOM list in main menu | Vitest: `leaderboard.submit()` persists to localStorage, `leaderboard.getAll()` returns sorted array. Playwright: submitted name appears in leaderboard list on main menu | new — Vitest + Playwright (both configured in `examples/spec-created-joust-game/`) |
 
 <!-- Feedback Harness column definitions:
 - Fidelity: live = real service interaction (CLI against backend, browser automation + live backend, Docker, real APIs). integration = multiple real components, mocks only at true external boundaries. isolated = unit tests with mocks (justify why higher fidelity is infeasible). manual = human-only (justify).
@@ -151,8 +151,6 @@ Every AC has an automated feedback loop. Manual feedback is exceptional and just
 | Service | Functionality In Scope | Integration Status | Env Var | Est. Cost/Call | Test Budget (total) |
 |---------|----------------------|-------------------|---------|---------------|---------------------|
 | Google Public STUN | NAT traversal for WebRTC peer connections | new — hardcoded `stun:stun.l.google.com:19302` | None | Free | $0 |
-| WebRTC Signaling | SDP/ICE exchange for room creation and joining | new — Vercel serverless API route with in-memory or Redis-backed room state | `SIGNALING_URL` (optional, defaults to same origin) | Free (Vercel serverless free tier) | $0 |
-| Upstash Redis | Persistent leaderboard storage (sorted sets) | new — install via Vercel Marketplace | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Free tier: 10k req/day | $0 |
 
 <!-- Column definitions:
 - Integration Status: existing = wrapper + endpoint wired. partial — describe what exists / what's missing. new — describe what to build.
