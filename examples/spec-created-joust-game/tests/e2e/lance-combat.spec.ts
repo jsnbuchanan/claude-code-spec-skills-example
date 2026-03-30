@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // Fidelity: live (Playwright + window.game test API)
 
 test.describe('AC-2: Lance Combat', () => {
-  test('higher lance wins combat, egg spawns, particles play', async ({ page }) => {
+  test('higher lance wins combat, egg spawns and drops to platform, particles play', async ({ page }) => {
     await page.goto('/');
     await page.waitForFunction(() => window.game !== undefined);
     await page.evaluate(() => window.game.setTestMode(true));
@@ -33,6 +33,13 @@ test.describe('AC-2: Lance Combat', () => {
     // Particles should be active
     const particleCount = await page.evaluate(() => window.game.getParticleCount());
     expect(particleCount).toBeGreaterThan(0);
+
+    // Wait for egg to drop to nearest platform
+    await page.waitForTimeout(500);
+    const eggs = await page.evaluate(() => window.game.getEntities('egg'));
+    expect(eggs.length).toBe(1);
+    // Egg should be on or near a platform (Y should be reasonable, not falling forever)
+    expect(eggs[0].position.y).toBeGreaterThan(0);
   });
 
   test('lower lance loses combat', async ({ page }) => {

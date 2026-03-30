@@ -38,4 +38,33 @@ test.describe('AC-5: Local Multiplayer', () => {
     const p2AfterFlap = await page.evaluate(() => window.game.getPlayerPosition(1));
     expect(p2AfterFlap!.y).toBeLessThan(p2Before!.y);
   });
+
+  test('both players interact with shared enemy entities', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForFunction(() => window.game !== undefined);
+    await page.evaluate(() => window.game.setTestMode(true));
+
+    // Spawn players and an enemy
+    await page.evaluate(() => {
+      window.game.spawnEntity('player', { x: 200, y: 100 }, { playerIndex: 0 });
+      window.game.spawnEntity('player', { x: 600, y: 100 }, { playerIndex: 1 });
+      window.game.spawnEntity('enemy', { x: 400, y: 200 }, { tier: 'bounder' });
+    });
+
+    // Both players should see the same enemy
+    const enemies = await page.evaluate(() => window.game.getEntities('enemy'));
+    expect(enemies.length).toBe(1);
+
+    // Player 1 defeats the enemy
+    const players = await page.evaluate(() => window.game.getEntities('player'));
+    const result = await page.evaluate(
+      ([pId, eId]) => window.game.triggerCombat(pId, eId),
+      [players[0].id, enemies[0].id]
+    );
+    expect(result).not.toBeNull();
+
+    // Enemy should be gone for both players (shared world)
+    const remainingEnemies = await page.evaluate(() => window.game.getEntities('enemy'));
+    expect(remainingEnemies.length).toBe(0);
+  });
 });
