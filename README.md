@@ -25,7 +25,7 @@ The result? A fully playable browser-based Joust game, built from nothing but a 
 
 **1. Get the skills**
 
-Download [spec-workflow-skills.zip](.claude/skills/spec-workflow-skills.zip) and extract, or copy the four skill directories from [`.claude/skills/`](.claude/skills/) into your own project's `.claude/skills/` folder. You'll also want to create a `vault/specs/` directory structure for spec lifecycle management:
+Download [spec-workflow-skills.zip](https://raw.githubusercontent.com/jsnbuchanan/claude-code-spec-skills-example/main/.claude/skills/spec-workflow-skills.zip) and extract, or copy the four skill directories from [`.claude/skills/`](.claude/skills/) into your own project's `.claude/skills/` folder. You'll also want to create a `vault/specs/` directory structure for spec lifecycle management:
 
 ```
 your-project/
@@ -44,7 +44,7 @@ your-project/
 
 **2. Learn the workflow**
 
-Open [How to use these skills.pdf](.claude/skills/How%20to%20use%20these%20skills.pdf) for a detailed walkthrough of the full spec lifecycle — from drafting your first spec through implementation and delivery.
+Open [How to use these skills.pdf](https://raw.githubusercontent.com/jsnbuchanan/claude-code-spec-skills-example/main/.claude/skills/How%20to%20use%20these%20skills.pdf) for a detailed walkthrough of the full spec lifecycle — from drafting your first spec through implementation and delivery.
 
 **3. Try it**
 
