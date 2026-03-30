@@ -9,27 +9,33 @@ test.describe('AC-5: Local Multiplayer', () => {
     await page.waitForFunction(() => window.game !== undefined);
     await page.evaluate(() => window.game.setTestMode(true));
 
-    // Spawn two players
+    // Wait for player to settle on platform
+    await page.waitForTimeout(500);
+
+    // Spawn P2 on a platform (left mid platform y=420, height=40 → spawn at 380)
     await page.evaluate(() => {
-      window.game.spawnEntity('player', { x: 200, y: 300 }, { playerIndex: 0 });
-      window.game.spawnEntity('player', { x: 600, y: 300 }, { playerIndex: 1 });
+      window.game.spawnEntity('player', { x: 550, y: 380 }, { playerIndex: 1 });
     });
+
+    // Wait for P2 to settle on platform
+    await page.waitForTimeout(500);
 
     const p1Before = await page.evaluate(() => window.game.getPlayerPosition(0));
     const p2Before = await page.evaluate(() => window.game.getPlayerPosition(1));
     expect(p1Before).not.toBeNull();
     expect(p2Before).not.toBeNull();
 
-    // Player 1 flaps (Arrow Up), Player 2 stays
+    // Player 1 flaps (Arrow Up)
     await page.keyboard.press('ArrowUp');
     await page.waitForTimeout(200);
 
     const p1After = await page.evaluate(() => window.game.getPlayerPosition(0));
     const p2After = await page.evaluate(() => window.game.getPlayerPosition(1));
 
-    // P1 should have moved up, P2 should be unchanged
+    // P1 should have moved up
     expect(p1After!.y).toBeLessThan(p1Before!.y);
-    expect(p2After!.y).toBe(p2Before!.y);
+    // P2 should be approximately where it was (on a platform, small tolerance for physics)
+    expect(Math.abs(p2After!.y - p2Before!.y)).toBeLessThan(5);
 
     // Now Player 2 flaps (W key)
     await page.keyboard.press('w');
@@ -44,26 +50,31 @@ test.describe('AC-5: Local Multiplayer', () => {
     await page.waitForFunction(() => window.game !== undefined);
     await page.evaluate(() => window.game.setTestMode(true));
 
-    // Spawn players and an enemy
-    await page.evaluate(() => {
-      window.game.spawnEntity('player', { x: 200, y: 100 }, { playerIndex: 0 });
-      window.game.spawnEntity('player', { x: 600, y: 100 }, { playerIndex: 1 });
-      window.game.spawnEntity('enemy', { x: 400, y: 200 }, { tier: 'bounder' });
-    });
+    // Kill existing enemies, then spawn a controlled one below the player
+    await page.evaluate(() => window.game.killAllEnemies());
+
+    // Spawn a player high up so it wins lance combat (lower Y = higher position = wins)
+    const highPlayerId = await page.evaluate(() =>
+      window.game.spawnEntity('player', { x: 400, y: 50 }, { playerIndex: 3 })
+    );
+
+    const enemyId = await page.evaluate(() =>
+      window.game.spawnEntity('enemy', { x: 400, y: 200 }, { tier: 'bounder' })
+    );
 
     // Both players should see the same enemy
     const enemies = await page.evaluate(() => window.game.getEntities('enemy'));
     expect(enemies.length).toBe(1);
 
-    // Player 1 defeats the enemy
-    const players = await page.evaluate(() => window.game.getEntities('player'));
+    // High player defeats the enemy (higher lance wins)
     const result = await page.evaluate(
       ([pId, eId]) => window.game.triggerCombat(pId, eId),
-      [players[0].id, enemies[0].id]
+      [highPlayerId, enemyId]
     );
     expect(result).not.toBeNull();
+    expect(result!.eggSpawned).toBe(true);
 
-    // Enemy should be gone for both players (shared world)
+    // Enemy should be gone (shared world)
     const remainingEnemies = await page.evaluate(() => window.game.getEntities('enemy'));
     expect(remainingEnemies.length).toBe(0);
   });

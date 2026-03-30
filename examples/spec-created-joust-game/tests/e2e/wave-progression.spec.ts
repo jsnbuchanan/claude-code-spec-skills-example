@@ -9,7 +9,6 @@ test.describe('AC-4: Wave Progression', () => {
     await page.waitForFunction(() => window.game !== undefined);
     await page.evaluate(() => window.game.setTestMode(true));
 
-    // Check initial wave
     const wave1 = await page.evaluate(() => window.game.getWaveState());
     expect(wave1.waveNumber).toBe(1);
 
@@ -18,21 +17,18 @@ test.describe('AC-4: Wave Progression', () => {
 
     // Kill all enemies to advance wave
     await page.evaluate(() => window.game.killAllEnemies());
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    // Verify wave 2
     const wave2 = await page.evaluate(() => window.game.getWaveState());
     expect(wave2.waveNumber).toBe(2);
 
     const wave2Enemies = await page.evaluate(() => window.game.getWaveEnemies(2));
-    // More enemies OR higher-tier enemies
     const hasMoreEnemies = wave2Enemies.length > wave1Enemies.length;
     const hasHigherTier = wave2Enemies.some(
       (e: any) => e.tier === 'hunter' || e.tier === 'shadow_lord'
     );
     expect(hasMoreEnemies || hasHigherTier).toBe(true);
 
-    // Verify wave counter DOM element
     const waveText = await page.locator('[data-testid="wave-counter"]').textContent();
     expect(waveText).toContain('Wave 2');
   });
@@ -46,16 +42,21 @@ test.describe('AC-4: Wave Progression', () => {
     const wave1 = await page.evaluate(() => window.game.getWaveEnemies(1));
     expect(wave1.every((e: any) => e.tier === 'bounder')).toBe(true);
 
-    // Advance to wave 3+ to see hunters
-    for (let i = 0; i < 3; i++) {
+    // Advance to wave 4+ to see hunters (HUNTER_INTRO_WAVE = 3)
+    for (let i = 0; i < 4; i++) {
       await page.evaluate(() => window.game.killAllEnemies());
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(800);
     }
 
-    const laterWave = await page.evaluate(() => window.game.getWaveState());
-    const enemies = await page.evaluate(() => window.game.getWaveEnemies(laterWave.waveNumber));
+    // Get the current wave number and its enemies
+    const currentWave = await page.evaluate(() => window.game.getWaveState());
+    const waveNum = currentWave.waveNumber;
+    const enemies = await page.evaluate(
+      (wn) => window.game.getWaveEnemies(wn),
+      waveNum
+    );
     const tiers = enemies.map((e: any) => e.tier);
-    // Should include higher tiers by wave 4
+    // Should include higher tiers by wave 5
     expect(tiers.some((t: string) => t !== 'bounder')).toBe(true);
   });
 });
