@@ -12,6 +12,12 @@ export interface Entity {
   height: number;
 }
 
+export interface PlayerAvatar {
+  name: string;
+  imageKey: string;
+  isDefault: boolean;
+}
+
 export interface Player extends Entity {
   type: 'player';
   playerIndex: number;
@@ -20,6 +26,12 @@ export interface Player extends Entity {
   isFlapping: boolean;
   hasShield: boolean;
   lanceHeight: number;
+  avatar?: PlayerAvatar;
+  headBobblePhase: number;
+  headTiltAngle: number;
+  triumphTimer: number;
+  deathTimer: number;
+  isDying: boolean;
 }
 
 export type EnemyTier = 'bounder' | 'hunter' | 'shadow_lord';
