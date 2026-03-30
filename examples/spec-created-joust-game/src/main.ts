@@ -17,6 +17,7 @@ import {
 import { createHUD, updateHUD } from './ui/hud';
 import { createMenu, hideMenu, showMenu, type MenuAction } from './ui/menu';
 import { showPlayerSelect } from './ui/player-select';
+import { showCountdown } from './ui/countdown';
 import { submitScore } from './leaderboard';
 import { createRoom as peerCreateRoom, joinRoom as peerJoinRoom, getConnectionState as peerGetConnectionState, sendPeerMessage, onPeerMessage, disconnect } from './networking/peer';
 import * as C from './engine/constants';
@@ -216,6 +217,7 @@ async function selectPlayersAndStart(mode: GameMode, playerCount: number): Promi
     avatars.push(avatar);
   }
 
+  await showCountdown(playerCount, container);
   startGame(mode, playerCount, avatars);
 }
 
