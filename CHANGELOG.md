@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-30
+
+### Fixed
+
+- PDF and ZIP download links in README now trigger direct browser downloads instead of showing GitHub's file viewer
+- Corrected file paths for `spec-workflow-skills.zip` and `How to use these skills.pdf`
+
 ## [1.0.0] - 2026-03-30
 
 ### Added
@@ -47,4 +54,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CONTRIBUTING.md with contributor license agreement and code standards
 - NOTICE file per Apache 2.0 requirements
 
+[1.0.1]: https://github.com/jsnbuchanan/claude-code-spec-skills-example/releases/tag/v1.0.1
 [1.0.0]: https://github.com/jsnbuchanan/claude-code-spec-skills-example/releases/tag/v1.0.0
